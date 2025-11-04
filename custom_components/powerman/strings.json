@@ -3,10 +3,13 @@
     "step": {
       "user": {
         "title": "Set up PowerMan",
-        "description": "Create a demo power monitor sensor.",
+        "description": "Choose which existing sensors will drive PowerMan.",
         "data": {
           "name": "Name",
-          "update_interval": "Update interval (seconds)"
+          "update_interval": "Update interval (seconds)",
+          "battery_entity": "Battery % entity (optional)",
+          "solar_power_entity": "Solar power (W) entity (optional)",
+          "solar_energy_today_entity": "Solar energy today (kWh) entity (optional)"
         }
       }
     }
@@ -15,8 +18,13 @@
     "step": {
       "init": {
         "title": "PowerMan options",
+        "description": "Change polling interval or mapped entities.",
         "data": {
-          "update_interval": "Update interval (seconds)"
+          "name": "Name (display only)",
+          "update_interval": "Update interval (seconds)",
+          "battery_entity": "Battery % entity",
+          "solar_power_entity": "Solar power (W) entity",
+          "solar_energy_today_entity": "Solar energy today (kWh) entity"
         }
       }
     }

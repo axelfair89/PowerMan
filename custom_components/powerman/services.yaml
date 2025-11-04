@@ -1,4 +1,9 @@
 generate_insight:
-  name: Generate insight
-  description: Build a daily energy summary and optionally send it to your configured Conversation agent (e.g., Google Gemini).
+  name: Generate AI insight
+  description: Build a daily energy summary and optionally send it to your Conversation agent.
+  fields: {}
+
+advise_now:
+  name: Compute advice now
+  description: Immediately compute and notify the current operational advice.
   fields: {}

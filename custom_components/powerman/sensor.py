@@ -38,6 +38,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry, async_add_e
     if entry.options.get(CONF_SOLAR_ENERGY_TODAY_ENTITY):
         sensors.append(SolarEnergyTodaySensor(coordinator, entry, f"{name} Solar Energy Today"))
 
+    sensors.append(AdviceSensor(coordinator, entry, f"{name} Advice"))
+
     if sensors:
         async_add_entities(sensors)
 
@@ -104,3 +106,30 @@ class SolarEnergyTodaySensor(_BasePowerManSensor):
     @property
     def native_value(self) -> float | None:
         return self.coordinator.data.get("solar_energy_today_kwh")
+
+
+class AdviceSensor(_BasePowerManSensor):
+    icon = "mdi:lightbulb-on-outline"
+
+    def __init__(self, coordinator: PowerManCoordinator, entry: ConfigEntry, name: str) -> None:
+        super().__init__(coordinator, entry, name, "advice")
+
+    @property
+    def native_value(self) -> str:
+        adv = self.coordinator.data.get("advice") or {}
+        return adv.get("code") or "unknown"
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:  # type: ignore[override]
+        adv = self.coordinator.data.get("advice") or {}
+        base = super().extra_state_attributes
+        base.update(
+            {
+                "title": adv.get("title"),
+                "confidence": adv.get("confidence"),
+                "reasons": adv.get("reasons"),
+                "timestamp": adv.get("timestamp"),
+                "next_review_minutes": adv.get("next_review_minutes"),
+            }
+        )
+        return base

@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.event import async_call_later
 from homeassistant.util import dt as dt_util
 
 from .const import (
@@ -13,6 +14,10 @@ from .const import (
     CONF_AGENT_ID,
     CONF_MINUTES_BETWEEN_AI,
     DEFAULT_MINUTES_BETWEEN_AI,
+    CONF_NOTIFY_CHANGE,
+    CONF_ADVISOR_INTERVAL_MIN,
+    DEFAULT_NOTIFY_CHANGE,
+    DEFAULT_ADVISOR_INTERVAL_MIN,
 )
 from .coordinator import PowerManCoordinator
 
@@ -35,10 +40,71 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "coordinator": coordinator,
         LAST_AI_KEY: None,
+        "adv_prev_code": None,
+        "adv_timer_unsub": None,
     }
+    store = hass.data[DOMAIN][entry.entry_id]
+    store["adv_prev_code"] = (coordinator.data.get("advice") or {}).get("code")
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
+    async def _notify_advice(title: str, message: str) -> None:
+        await hass.services.async_call(
+            "persistent_notification",
+            "create",
+            {"title": title, "message": message},
+            blocking=True,
+        )
+
+    def _format_reasons(reasons: list[str] | None) -> str:
+        if not reasons:
+            return "- No reasons provided"
+        return "\n".join(f"- {reason}" for reason in reasons)
+
+    async def _handle_advise_now(call):
+        await coordinator.async_request_refresh()
+        adv = coordinator.data.get("advice") or {}
+        reasons = _format_reasons(adv.get("reasons"))
+        if adv.get("code"):
+            store["adv_prev_code"] = adv.get("code")
+        await _notify_advice(
+            "PowerMan — Advice",
+            f"{adv.get('title', '(no advice)')}\n\nReasons:\n{reasons}",
+        )
+
+    hass.services.async_register(DOMAIN, "advise_now", _handle_advise_now)
+
+    async def _periodic_watch(now=None):
+        await coordinator.async_request_refresh()
+        adv = coordinator.data.get("advice") or {}
+        code = adv.get("code")
+
+        prev_code = store.get("adv_prev_code")
+        if code and code != prev_code:
+            if entry.options.get(CONF_NOTIFY_CHANGE, DEFAULT_NOTIFY_CHANGE):
+                reasons = _format_reasons(adv.get("reasons"))
+                await _notify_advice(
+                    "PowerMan — Advice changed",
+                    f"{adv.get('title', '')}\n\nReasons:\n{reasons}",
+                )
+            store["adv_prev_code"] = code
+        elif code is None and prev_code is not None:
+            store["adv_prev_code"] = None
+
+        interval = int(
+            entry.options.get(CONF_ADVISOR_INTERVAL_MIN, DEFAULT_ADVISOR_INTERVAL_MIN)
+        )
+        _schedule_watch(interval * 60)
+
+    def _schedule_watch(delay_seconds: float) -> None:
+        if store.get("adv_timer_unsub"):
+            store["adv_timer_unsub"]()
+        store["adv_timer_unsub"] = async_call_later(
+            hass, delay_seconds, _periodic_watch
+        )
+
+    _schedule_watch(5)
 
     # ---- Service: powerman.generate_insight ----
     async def _handle_generate_insight(call):
@@ -146,7 +212,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        store = hass.data[DOMAIN].pop(entry.entry_id, None)
+        if store and store.get("adv_timer_unsub"):
+            store["adv_timer_unsub"]()
     return unload_ok
 
 

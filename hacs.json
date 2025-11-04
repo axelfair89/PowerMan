@@ -1,0 +1,7 @@
+{
+  "name": "PowerMan",
+  "domain": "powerman",
+  "country": "all",
+  "homeassistant": "2024.0.0",
+  "render_readme": true
+}

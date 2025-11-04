@@ -9,7 +9,9 @@
           "update_interval": "Update interval (seconds)",
           "battery_entity": "Battery % entity (optional)",
           "solar_power_entity": "Solar power (W) entity (optional)",
-          "solar_energy_today_entity": "Solar energy today (kWh) entity (optional)"
+          "solar_energy_today_entity": "Solar energy today (kWh) entity (optional)",
+          "agent_id": "Conversation agent id (optional, e.g. your Gemini conversation)",
+          "min_minutes_between_ai": "Minimum minutes between AI calls"
         }
       }
     }
@@ -18,13 +20,15 @@
     "step": {
       "init": {
         "title": "PowerMan options",
-        "description": "Change polling interval or mapped entities.",
+        "description": "Change polling interval, mapped entities, and AI settings.",
         "data": {
           "name": "Name (display only)",
           "update_interval": "Update interval (seconds)",
           "battery_entity": "Battery % entity",
           "solar_power_entity": "Solar power (W) entity",
-          "solar_energy_today_entity": "Solar energy today (kWh) entity"
+          "solar_energy_today_entity": "Solar energy today (kWh) entity",
+          "agent_id": "Conversation agent id (optional)",
+          "min_minutes_between_ai": "Minimum minutes between AI calls"
         }
       }
     }

@@ -1,2 +1,4 @@
-
-# Define services here if/when you add them.
+generate_insight:
+  name: Generate insight
+  description: Build a daily energy summary and optionally send it to your configured Conversation agent (e.g., Google Gemini).
+  fields: {}

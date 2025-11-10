@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./logo.svg" alt="PowerMan logo" width="320" />
+</p>
+
 🧠 PowerMan
 
 A modular Home Assistant integration for energy insights and AI-assisted summaries.
